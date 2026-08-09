@@ -3,6 +3,7 @@ package app.lawnchair.views
 import android.content.Context
 import android.util.FloatProperty
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.animation.Interpolator
@@ -51,6 +52,17 @@ class ComposeBottomSheet<T>(context: Context) : AbstractSlideInView<T>(context, 
     private var hintCloseDistance = 0f
     val hintCloseProgress: Float get() = _hintCloseProgress.floatValue
 
+    /**
+     * Whether the Compose content is scrolled away from its top.
+     *
+     * Scrollable content must report this, or a drag that scrolls it back up is
+     * taken as drag-to-dismiss and closes the sheet instead: the swipe detector
+     * is armed on every downward drag and cannot see Compose's scroll state.
+     * The same problem is solved the same way for Launcher3's own sheets, which
+     * set `mNoIntercept` from their RecyclerView's scroll position.
+     */
+    var canContentScrollUp: () -> Boolean = { false }
+
     init {
         layoutParams = BaseDragLayer.LayoutParams(MATCH_PARENT, MATCH_PARENT)
             .apply { ignoreInsets = true }
@@ -81,6 +93,15 @@ class ComposeBottomSheet<T>(context: Context) : AbstractSlideInView<T>(context, 
                 }
             }
         }
+    }
+
+    override fun onControllerInterceptTouchEvent(ev: MotionEvent): Boolean {
+        if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
+            // Only while the touch is on the content: a tap on the scrim still
+            // has to close the sheet.
+            mNoIntercept = isEventOverContent(ev) && canContentScrollUp()
+        }
+        return super.onControllerInterceptTouchEvent(ev)
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
