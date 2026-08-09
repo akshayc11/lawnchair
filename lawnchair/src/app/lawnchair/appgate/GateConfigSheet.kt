@@ -48,18 +48,6 @@ import kotlinx.coroutines.launch
 /** The hour a daily allowance refills at. */
 internal const val DAILY_RESET_HOUR = 5
 
-private const val ALLOWANCE_MIN_MINUTES = 5
-private const val ALLOWANCE_MAX_MINUTES = 180
-private const val ALLOWANCE_STEP_MINUTES = 5
-
-/**
- * The stops of the allowance slider, in minutes. Unlimited is the last stop
- * rather than a separate control: sliding right buys more time, and all the way
- * right buys as much as you like.
- */
-private val ALLOWANCE_CHOICES: List<Int?> =
-    (ALLOWANCE_MIN_MINUTES..ALLOWANCE_MAX_MINUTES step ALLOWANCE_STEP_MINUTES).toList() + null
-
 /**
  * Read off the policy the engine actually runs, so the copy cannot drift from
  * the behaviour it describes.
@@ -234,11 +222,9 @@ fun GateConfigSheet(
         // sheet — the dismiss detector only arms when the vertical component of
         // a drag exceeds the horizontal one.
         Slider(
-            value = allowanceIndexOf(dailyMinutes).toFloat(),
-            onValueChange = { position ->
-                dailyMinutes = ALLOWANCE_CHOICES[position.roundToInt().coerceIn(ALLOWANCE_CHOICES.indices)]
-            },
-            valueRange = 0f..ALLOWANCE_CHOICES.lastIndex.toFloat(),
+            value = AllowanceStops.indexOf(dailyMinutes).toFloat(),
+            onValueChange = { position -> dailyMinutes = AllowanceStops.minutesAt(position.roundToInt()) },
+            valueRange = 0f..AllowanceStops.lastIndex.toFloat(),
             modifier = Modifier.fillMaxWidth(),
         )
         if (dailyMinutes != null) {
@@ -313,17 +299,6 @@ fun GateConfigSheet(
             }
         }
     }
-}
-
-/**
- * The slider stop for a stored allowance. Values are snapped to the stop grid
- * so a Gate saved before the grid existed still puts the thumb somewhere sane;
- * null — unlimited — is the last stop.
- */
-private fun allowanceIndexOf(minutes: Int?): Int {
-    if (minutes == null) return ALLOWANCE_CHOICES.lastIndex
-    val snapped = minutes.coerceIn(ALLOWANCE_MIN_MINUTES, ALLOWANCE_MAX_MINUTES)
-    return (snapped - ALLOWANCE_MIN_MINUTES + ALLOWANCE_STEP_MINUTES / 2) / ALLOWANCE_STEP_MINUTES
 }
 
 @Composable

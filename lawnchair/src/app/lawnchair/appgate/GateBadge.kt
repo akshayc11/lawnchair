@@ -39,28 +39,6 @@ object GateBadge {
     private const val GLYPH_INSET_FRACTION = 0.22f
     private const val TEXT_SIZE_FRACTION = 0.62f
 
-    /**
-     * Above this a number stops fitting in the badge, and the exact figure
-     * stops mattering: the padlock is drawn instead.
-     */
-    private const val MAX_SHOWN_MINUTES = 99
-
-    /**
-     * One colour per Tier, green through red. Shades are picked to stay legible
-     * on the badge's white circle, so "pale yellow" is a lime that reads pale
-     * rather than a true pastel, which would all but vanish.
-     */
-    private val TIER_COLORS = mapOf(
-        Tier.NUDGE to Color.parseColor("#2E7D32"),
-        Tier.DELAY to Color.parseColor("#C0CA33"),
-        Tier.EFFORT to Color.parseColor("#EF6C00"),
-        Tier.COMMITMENT to Color.parseColor("#D32F2F"),
-        // Darker than the red above it, so locked is not mistaken for the tier
-        // below at a glance; the greyed icon is the other half of that signal.
-        Tier.LOCKED to Color.parseColor("#8B0000"),
-    )
-    private val DEFAULT_COLOR = Color.parseColor("#F9A825")
-
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -95,28 +73,24 @@ object GateBadge {
         val centerX = iconBounds.left + radius
         val centerY = iconBounds.top + radius
 
-        // Minutes left only while there are some, and only while they fit: a
-        // spent allowance is LOCKED, and a red "0" would read as a countdown
-        // that is still running.
-        val minutesLeft = badge.allowanceMinutesLeft
-            ?.takeIf { it in 1..MAX_SHOWN_MINUTES && badge.tier != Tier.LOCKED }
-        val color = TIER_COLORS[badge.tier] ?: DEFAULT_COLOR
-
-        val glyph = if (minutesLeft == null) lockGlyph(context) ?: return else null
+        // What to say is decided in GateBadgeContent, which is pure and tested;
+        // everything from here down is only how to draw it.
+        val content = gateBadgeContentFor(badge.tier, badge.allowanceMinutesLeft)
+        val glyph = if (content is GateBadgeContent.Padlock) lockGlyph(context) ?: return else null
 
         canvas.translate(scrollX.toFloat(), scrollY.toFloat())
         canvas.drawCircle(centerX, centerY, radius, backgroundPaint)
 
-        if (minutesLeft != null) {
-            val text = minutesLeft.toString()
-            textPaint.color = color
+        if (content is GateBadgeContent.Minutes) {
+            val text = content.minutes.toString()
+            textPaint.color = content.color
             textPaint.textSize = diameter * TEXT_SIZE_FRACTION
             // Centre on the glyph box rather than the baseline, so one and two
             // digits sit the same way inside the circle.
             textPaint.getTextBounds(text, 0, text.length, bounds)
             canvas.drawText(text, centerX, centerY + bounds.height() / 2f, textPaint)
         } else if (glyph != null) {
-            DrawableCompat.setTint(glyph, color)
+            DrawableCompat.setTint(glyph, content.color)
             val inset = (diameter * GLYPH_INSET_FRACTION).toInt()
             bounds.set(
                 iconBounds.left + inset,
