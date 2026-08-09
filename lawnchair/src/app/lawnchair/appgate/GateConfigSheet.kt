@@ -15,6 +15,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,13 +41,24 @@ import com.akshayc.appgate.core.model.Tier
 import com.akshayc.appgate.core.policy.EscalationPolicy
 import com.android.launcher3.R
 import java.time.Duration
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /** The hour a daily allowance refills at. */
 internal const val DAILY_RESET_HOUR = 5
 
-private val ALLOWANCE_CHOICES = listOf(10, 15, 30, 45, 60, 90, 120)
+private const val ALLOWANCE_MIN_MINUTES = 5
+private const val ALLOWANCE_MAX_MINUTES = 180
+private const val ALLOWANCE_STEP_MINUTES = 5
+
+/**
+ * The stops of the allowance slider, in minutes. Unlimited is the last stop
+ * rather than a separate control: sliding right buys more time, and all the way
+ * right buys as much as you like.
+ */
+private val ALLOWANCE_CHOICES: List<Int?> =
+    (ALLOWANCE_MIN_MINUTES..ALLOWANCE_MAX_MINUTES step ALLOWANCE_STEP_MINUTES).toList() + null
 
 /**
  * Read off the policy the engine actually runs, so the copy cannot drift from
@@ -210,25 +222,32 @@ fun GateConfigSheet(
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
         Heading(R.string.appgate_configure_allowance_heading)
-        ChoiceRow(
-            selected = dailyMinutes == null,
-            title = stringResource(R.string.appgate_configure_allowance_unlimited),
-            body = null,
-            onSelect = { dailyMinutes = null },
+        Text(
+            text = dailyMinutes
+                ?.let { stringResource(R.string.appgate_configure_allowance_minutes, it) }
+                ?: stringResource(R.string.appgate_configure_allowance_unlimited),
+            style = MaterialTheme.typography.bodyLarge,
         )
-        ALLOWANCE_CHOICES.forEach { minutes ->
-            ChoiceRow(
-                selected = dailyMinutes == minutes,
-                title = stringResource(R.string.appgate_configure_allowance_minutes, minutes),
-                body = null,
-                onSelect = { dailyMinutes = minutes },
+        // Continuous slider snapped to the stop list rather than a stepped one:
+        // three dozen tick marks would be clutter, and the label above already
+        // says exactly where the thumb is. A sideways drag cannot close the
+        // sheet — the dismiss detector only arms when the vertical component of
+        // a drag exceeds the horizontal one.
+        Slider(
+            value = allowanceIndexOf(dailyMinutes).toFloat(),
+            onValueChange = { position ->
+                dailyMinutes = ALLOWANCE_CHOICES[position.roundToInt().coerceIn(ALLOWANCE_CHOICES.indices)]
+            },
+            valueRange = 0f..ALLOWANCE_CHOICES.lastIndex.toFloat(),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (dailyMinutes != null) {
+            Text(
+                text = stringResource(R.string.appgate_configure_allowance_reset, DAILY_RESET_HOUR),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Text(
-            text = stringResource(R.string.appgate_configure_allowance_reset, DAILY_RESET_HOUR),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
 
         if (!satisfiesConstraint) {
             Text(
@@ -294,6 +313,17 @@ fun GateConfigSheet(
             }
         }
     }
+}
+
+/**
+ * The slider stop for a stored allowance. Values are snapped to the stop grid
+ * so a Gate saved before the grid existed still puts the thumb somewhere sane;
+ * null — unlimited — is the last stop.
+ */
+private fun allowanceIndexOf(minutes: Int?): Int {
+    if (minutes == null) return ALLOWANCE_CHOICES.lastIndex
+    val snapped = minutes.coerceIn(ALLOWANCE_MIN_MINUTES, ALLOWANCE_MAX_MINUTES)
+    return (snapped - ALLOWANCE_MIN_MINUTES + ALLOWANCE_STEP_MINUTES / 2) / ALLOWANCE_STEP_MINUTES
 }
 
 @Composable
