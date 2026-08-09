@@ -922,10 +922,28 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
 
     @Override
     public void onDraw(Canvas canvas) {
+        applyGateDimIfNecessary();
         super.onDraw(canvas);
         drawDotIfNecessary(canvas);
         drawRunningAppIndicatorIfNecessary(canvas);
         drawGateIndicatorIfNecessary(canvas);
+    }
+
+    /**
+     * Greys the icon out while AppGate has the app locked, the same treatment a
+     * suspended app gets. Applied here rather than when the icon is bound
+     * because the locked state changes without a rebind - a daily allowance
+     * runs out - and the repaint that follows only reaches onDraw.
+     *
+     * The launcher's own reasons for greying an icon are kept: this can only
+     * add the disabled look, never take it away.
+     */
+    private void applyGateDimIfNecessary() {
+        if (mIcon == null || !(getTag() instanceof ItemInfo info)) {
+            return;
+        }
+        setIconDisabled(GateBadge.isLockedOut(getContext(), info)
+                || (info instanceof ItemInfoWithIcon iiwi && isIconDisabled(iiwi)));
     }
 
     /**
