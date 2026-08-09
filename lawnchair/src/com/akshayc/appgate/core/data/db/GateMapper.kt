@@ -40,6 +40,7 @@ internal fun Gate.toEntity(): GateEntity {
         budgetPeriodSeconds = budget?.period?.seconds,
         enabled = enabled,
         budgetResetHour = (budget as? Budget.DailyTime)?.resetHour,
+        escalation = config.escalation,
     )
 }
 
@@ -65,6 +66,7 @@ internal fun GateEntity.toGateOrNull(): Gate? {
                 authChallenge = auth,
                 grace = Duration.ofSeconds(graceSeconds),
                 budget = budget,
+                escalation = escalation == true,
             )
         }.getOrNull() ?: return null
 

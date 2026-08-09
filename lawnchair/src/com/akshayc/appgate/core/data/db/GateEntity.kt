@@ -26,6 +26,12 @@ data class GateEntity(
     val enabled: Boolean,
     /** Hour the daily allowance refills at; only set for [BudgetKind.DAILY_TIME]. */
     val budgetResetHour: Int? = null,
+    /**
+     * Whether escalating re-entry is switched on for this Gate. Nullable rather
+     * than a defaulted column so the migration stays an unadorned `ADD COLUMN`
+     * and Room's schema check has nothing to disagree about; null reads as off.
+     */
+    val escalation: Boolean? = null,
 )
 
 /** Discriminator values for [GateEntity.budgetKind]. */

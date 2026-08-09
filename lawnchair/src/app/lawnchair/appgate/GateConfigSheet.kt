@@ -37,6 +37,7 @@ import com.akshayc.appgate.core.model.Gate
 import com.akshayc.appgate.core.model.GateConfig
 import com.akshayc.appgate.core.model.Target
 import com.akshayc.appgate.core.model.Tier
+import com.akshayc.appgate.core.policy.EscalationPolicy
 import com.android.launcher3.R
 import java.time.Duration
 import kotlinx.coroutines.flow.first
@@ -46,6 +47,14 @@ import kotlinx.coroutines.launch
 internal const val DAILY_RESET_HOUR = 5
 
 private val ALLOWANCE_CHOICES = listOf(10, 15, 30, 45, 60, 90, 120)
+
+/**
+ * Read off the policy the engine actually runs, so the copy cannot drift from
+ * the behaviour it describes.
+ */
+private val ESCALATION_POLICY = EscalationPolicy()
+private val ESCALATION_CAP = ESCALATION_POLICY.cap
+private val ESCALATION_WINDOW_MINUTES = ESCALATION_POLICY.window.toMinutes().toInt()
 
 /**
  * Gate configuration for one Target, shown in a bottom sheet from the icon's
@@ -70,6 +79,7 @@ fun GateConfigSheet(
     var tier by rememberSaveable { mutableStateOf(Tier.DELAY) }
     var friction by rememberSaveable { mutableStateOf<FrictionChallenge?>(FrictionChallenge.BREATHING_DELAY) }
     var requireAuth by rememberSaveable { mutableStateOf(false) }
+    var escalation by rememberSaveable { mutableStateOf(false) }
     // null is unlimited, which is the default.
     var dailyMinutes by rememberSaveable { mutableStateOf<Int?>(null) }
     var existing by remember { mutableStateOf<Gate?>(null) }
@@ -82,11 +92,17 @@ fun GateConfigSheet(
             tier = gate.config.tier
             friction = gate.config.frictionChallenge
             requireAuth = gate.config.authChallenge != null
+            escalation = gate.config.escalation
             dailyMinutes = (gate.config.budget as? Budget.DailyTime)?.maxTotal?.toMinutes()?.toInt()
         }
     }
 
     val satisfiesConstraint = tier == Tier.NUDGE || friction != null || requireAuth
+
+    // Escalation has nothing to raise once the Tier is already at the cap, and
+    // auth-only gates opt out of it entirely, so the control is only offered
+    // where it would actually do something.
+    val escalationApplies = tier < ESCALATION_CAP && !(friction == null && requireAuth)
 
     Column(
         modifier = Modifier
@@ -160,6 +176,37 @@ fun GateConfigSheet(
             )
         }
 
+        if (escalationApplies) {
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Heading(R.string.appgate_configure_escalation_heading)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(value = escalation, onValueChange = { escalation = it })
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Checkbox(checked = escalation, onCheckedChange = null)
+                Column {
+                    Text(
+                        text = stringResource(R.string.appgate_configure_escalation),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.appgate_configure_escalation_body,
+                            ESCALATION_WINDOW_MINUTES,
+                            stringResource(ESCALATION_CAP.titleRes),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
         Heading(R.string.appgate_configure_allowance_heading)
@@ -229,6 +276,7 @@ fun GateConfigSheet(
                         // No grace: the Gate is raised on every open, so
                         // coming straight back is not waved through.
                         grace = Duration.ZERO,
+                        escalation = escalation && escalationApplies,
                         budget = dailyMinutes?.let {
                             Budget.DailyTime(
                                 maxTotal = Duration.ofMinutes(it.toLong()),

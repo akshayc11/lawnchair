@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * gate list is the user's full list of apps they struggle with (Privacy,
  * CLAUDE.md).
  */
-@Database(entities = [GateEntity::class, SessionEntity::class], version = 3, exportSchema = false)
+@Database(entities = [GateEntity::class, SessionEntity::class], version = 4, exportSchema = false)
 internal abstract class AppGateDatabase : RoomDatabase() {
     abstract fun gateDao(): GateDao
 
@@ -48,5 +48,17 @@ internal val MIGRATION_2_3 =
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("UPDATE gates SET graceSeconds = 0")
             db.execSQL("ALTER TABLE gates ADD COLUMN budgetResetHour INTEGER")
+        }
+    }
+
+/**
+ * Escalating re-entry becomes a per-Gate setting. Existing rows are left null,
+ * which reads as off: escalation used to apply to every Gate unasked, and a
+ * setting the user has never seen should not arrive already switched on.
+ */
+internal val MIGRATION_3_4 =
+    object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE gates ADD COLUMN escalation INTEGER")
         }
     }

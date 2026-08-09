@@ -51,11 +51,12 @@ class GatePolicyEngine(
             return GateDecision.Deny(DenyReason.BUDGET_EXHAUSTED)
         }
 
-        // Auth-only gates opt out of escalation: verify who, not slow when.
-        // Stacked gates escalate only the friction half — the auth requirement
-        // is read from config by the UI, unchanged by tier.
+        // Escalation is opt-in per Gate, and auth-only gates opt out of it
+        // whatever the setting says: verify who, not slow when. Stacked gates
+        // escalate only the friction half — the auth requirement is read from
+        // config by the UI, unchanged by tier.
         val tier =
-            if (config.isAuthOnly) {
+            if (!config.escalation || config.isAuthOnly) {
                 config.tier
             } else {
                 val reentries =

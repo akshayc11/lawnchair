@@ -16,6 +16,9 @@
     <string name="appgate_configure_friction_none">None</string>
     <string name="appgate_configure_auth_heading">Also ask who you are</string>
     <string name="appgate_configure_auth_biometric">Your device PIN, pattern or password</string>
+    <string name="appgate_configure_escalation_heading">Coming straight back</string>
+    <string name="appgate_configure_escalation">Ask for more each time</string>
+    <string name="appgate_configure_escalation_body">Reopening within %1$d minutes moves the gate up one level per return, as far as %2$s. It settles back once you have left it alone.</string>
     <string name="appgate_configure_needs_challenge">Pick at least one challenge for this level.</string>
     <string name="appgate_configure_allowance_heading">Daily allowance</string>
     <string name="appgate_configure_allowance_unlimited">Unlimited</string>

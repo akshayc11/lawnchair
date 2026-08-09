@@ -16,6 +16,16 @@ data class GateConfig(
     val authChallenge: AuthChallenge? = null,
     val grace: Duration = Duration.ofSeconds(30),
     val budget: Budget? = null,
+    /**
+     * Opt in to escalating re-entry: coming back soon after a session raises
+     * the Tier a step per re-entry, up to but never including [Tier.LOCKED] —
+     * escalation adds friction, it never turns into denial. Off by default:
+     * the Tier the user picked is the Tier they get.
+     *
+     * Ignored for auth-only gates, which opt out of escalation by design
+     * (verify who, not slow when).
+     */
+    val escalation: Boolean = false,
 ) {
     init {
         require(tier == Tier.NUDGE || frictionChallenge != null || authChallenge != null) {
