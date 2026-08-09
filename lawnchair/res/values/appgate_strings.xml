@@ -6,6 +6,10 @@
     security. No "blocking", "preventing" or "locking out" in user-facing text.
 -->
 <resources>
+    <string name="appgate_feature_heading">App gating</string>
+    <string name="appgate_feature_label">Gate apps</string>
+    <string name="appgate_feature_description">Put a challenge between tapping an app and opening it, per app, from the icon\'s long-press menu. Switching this off keeps your gates but stops raising them.</string>
+
     <string name="appgate_shortcut_label">Gate</string>
     <string name="appgate_sheet_title">Gate settings</string>
     <string name="appgate_not_gated">Not gated yet.</string>

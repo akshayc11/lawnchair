@@ -121,6 +121,17 @@ fun ExperimentalFeaturesPreferences(
             onPauseOrDispose { }
         }
 
+        PreferenceGroup(
+            modifier = Modifier,
+            heading = stringResource(R.string.appgate_feature_heading),
+        ) {
+            SwitchPreference(
+                adapter = prefs2.enableAppGate.getAdapter(),
+                label = stringResource(id = R.string.appgate_feature_label),
+                description = stringResource(id = R.string.appgate_feature_description),
+            )
+        }
+
         val alwaysReloadIconsAdapter = prefs2.alwaysReloadIcons.getAdapter()
         val enableGncAdapter = prefs.enableGnc.getAdapter()
         val vibrationFeedbackLevelAdapter = prefs.vibrationFeedbackLevel.getAdapter()

@@ -852,6 +852,17 @@ class PreferenceManager2 @Inject constructor(
         defaultValue = GestureHandlerConfig.NoOp,
     )
 
+    /**
+     * AppGate's master switch. On by default: the Gate a user configured should
+     * keep working, and this exists so it can be switched off, not so it has to
+     * be switched on. Off means no Gates are raised and no indicators drawn —
+     * the configuration is kept and comes back when it is switched on again.
+     */
+    val enableAppGate = preference(
+        key = booleanPreferencesKey(name = "enable_app_gate"),
+        defaultValue = true,
+    )
+
     val autoUpdaterNightly = preference(
         key = booleanPreferencesKey(name = "enable_nightly_auto_updater"),
         defaultValue = if (BuildConfig.APPLICATION_ID.contains("nightly")) {

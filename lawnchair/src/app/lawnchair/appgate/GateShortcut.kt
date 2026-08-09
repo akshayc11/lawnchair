@@ -24,6 +24,9 @@ object GateShortcut {
         when {
             itemInfo.itemType != ITEM_TYPE_APPLICATION -> null
             packageName == null -> null
+            // Switched off in settings: the whole feature is out of the way,
+            // menu item included. Configured Gates are kept, just not raised.
+            !AppGate.getInstance(launcher).isEnabled -> null
             // Safety invariant 1: the denylist is enforced here, not by hiding
             // the entry — dialer, emergency, system UI, Settings, and home are
             // never gateable.

@@ -7,6 +7,7 @@ import android.os.UserHandle
 import android.os.UserManager
 import android.telecom.TelecomManager
 import androidx.room.Room
+import app.lawnchair.preferences2.PreferenceManager2
 import app.lawnchair.util.MainThreadInitializedObject
 import com.akshayc.appgate.core.data.GateRepository
 import com.akshayc.appgate.core.data.RoomGateRepository
@@ -74,6 +75,10 @@ class AppGate(private val context: Context) {
 
     private val policyEngine = GatePolicyEngine(clock)
 
+    // Starts on, matching the preference's own default, so a gate is never
+    // missed in the moment before the first value arrives.
+    private val _enabled = MutableStateFlow(true)
+
     private val _gates = MutableStateFlow<List<Gate>>(emptyList())
     private val _badges = MutableStateFlow<Map<GateKey, GateBadgeState>>(emptyMap())
     private val _sessions = MutableStateFlow<List<Session>>(emptyList())
@@ -102,7 +107,21 @@ class AppGate(private val context: Context) {
         scope.launch {
             sessionRepository.pruneBefore(clock.instant().minus(SESSION_HISTORY))
         }
+        scope.launch {
+            PreferenceManager2.getInstance(context).enableAppGate.get().collect { enabled ->
+                _enabled.value = enabled
+                // Indicators go with it: the badges Flow is what repaints icons.
+                recomputeBadges()
+            }
+        }
     }
+
+    /**
+     * Whether gating is switched on at all. Off is a real off — no Gate is
+     * raised, no indicator is drawn — but nothing is forgotten: the Gates stay
+     * configured and start working again when it is switched back on.
+     */
+    val isEnabled: Boolean get() = _enabled.value
 
     /**
      * What the icon should say. A gate whose daily allowance is spent reads as
@@ -115,6 +134,10 @@ class AppGate(private val context: Context) {
      * icon is not on screen then, and it is refreshed by the time it is.
      */
     private fun recomputeBadges() {
+        if (!_enabled.value) {
+            _badges.value = emptyMap()
+            return
+        }
         val now = clock.instant()
         _badges.value = _gates.value
             .filter { it.enabled }
@@ -182,6 +205,7 @@ class AppGate(private val context: Context) {
      * applies (safety invariant 2).
      */
     fun evaluate(packageName: String, user: UserHandle): GateDecision {
+        if (!_enabled.value) return GateDecision.Allow
         awaitSnapshots()
         val target = targetFor(packageName, user)
         val now = clock.instant()
