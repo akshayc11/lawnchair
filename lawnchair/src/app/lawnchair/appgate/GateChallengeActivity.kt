@@ -44,6 +44,8 @@ class GateChallengeActivity : ComponentActivity() {
     private lateinit var target: Target
     private lateinit var user: UserHandle
     private var component: ComponentName? = null
+    private var deepShortcutId: String? = null
+    private var shortcutIntent: Intent? = null
     private var appLabel: String = ""
     private var friction: FrictionChallenge? = null
     private var allowanceResetHour: Int = DAILY_RESET_HOUR
@@ -73,6 +75,8 @@ class GateChallengeActivity : ComponentActivity() {
         user = userHandle
         target = appGate.targetFor(packageName, userHandle)
         component = IntentCompat.getComponent(intent)
+        deepShortcutId = intent.getStringExtra(EXTRA_SHORTCUT_ID)
+        shortcutIntent = IntentCompat.getShortcutIntent(intent)
         appLabel = intent.getStringExtra(EXTRA_APP_LABEL) ?: packageName
 
         val gate = appGate.gateFor(packageName, userHandle)
@@ -191,8 +195,33 @@ class GateChallengeActivity : ComponentActivity() {
         finish()
     }
 
+    /**
+     * Finishes the launch the Gate interrupted: the deep shortcut the user
+     * tapped, the legacy shortcut's own Intent, or the app itself. Starting the
+     * app's main activity for a shortcut tap would quietly hand the user
+     * something they did not ask for.
+     */
     private fun launchTarget() {
         val launcherApps = getSystemService(LauncherApps::class.java) ?: return
+
+        val shortcutId = deepShortcutId
+        if (shortcutId != null) {
+            val started = runCatching {
+                launcherApps.startShortcut(target.packageName, shortcutId, null, null, user)
+            }.isSuccess
+            if (started) return
+            // The shortcut may have been removed while the Gate was up; the app
+            // itself is the honest fallback, and never failing to launch at all.
+        }
+
+        val forwarded = shortcutIntent
+        if (forwarded != null) {
+            val started = runCatching {
+                startActivity(Intent(forwarded).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }.isSuccess
+            if (started) return
+        }
+
         val component = component
         val fallback = runCatching {
             launcherApps.getActivityList(target.packageName, user).firstOrNull()?.componentName
@@ -224,6 +253,14 @@ class GateChallengeActivity : ComponentActivity() {
                 @Suppress("DEPRECATION")
                 intent.getParcelableExtra(EXTRA_COMPONENT)
             }
+
+        fun getShortcutIntent(intent: Intent): Intent? =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(EXTRA_SHORTCUT_INTENT, Intent::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(EXTRA_SHORTCUT_INTENT)
+            }
     }
 
     companion object {
@@ -231,6 +268,8 @@ class GateChallengeActivity : ComponentActivity() {
         private const val EXTRA_USER = "app.lawnchair.appgate.USER"
         private const val EXTRA_COMPONENT = "app.lawnchair.appgate.COMPONENT"
         private const val EXTRA_APP_LABEL = "app.lawnchair.appgate.APP_LABEL"
+        private const val EXTRA_SHORTCUT_ID = "app.lawnchair.appgate.SHORTCUT_ID"
+        private const val EXTRA_SHORTCUT_INTENT = "app.lawnchair.appgate.SHORTCUT_INTENT"
 
         @JvmStatic
         fun createIntent(
@@ -239,10 +278,14 @@ class GateChallengeActivity : ComponentActivity() {
             user: UserHandle,
             component: ComponentName?,
             appLabel: CharSequence?,
+            deepShortcutId: String? = null,
+            shortcutIntent: Intent? = null,
         ): Intent = Intent(context, GateChallengeActivity::class.java)
             .putExtra(EXTRA_PACKAGE, packageName)
             .putExtra(EXTRA_USER, user)
             .putExtra(EXTRA_COMPONENT, component)
             .putExtra(EXTRA_APP_LABEL, appLabel?.toString())
+            .putExtra(EXTRA_SHORTCUT_ID, deepShortcutId)
+            .putExtra(EXTRA_SHORTCUT_INTENT, shortcutIntent)
     }
 }

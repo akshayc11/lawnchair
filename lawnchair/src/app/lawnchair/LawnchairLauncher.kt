@@ -309,7 +309,7 @@ class LawnchairLauncher : QuickstepLauncher() {
      * method already handle.
      */
     override fun startActivitySafely(v: View?, intent: Intent, item: ItemInfo?): RunnableList? {
-        val challenge = gateChallengeIntentOrNull(item)
+        val challenge = gateChallengeIntentOrNull(item, intent)
         if (challenge != null) {
             startActivity(challenge)
             return null
