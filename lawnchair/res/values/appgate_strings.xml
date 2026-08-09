@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    AppGate copy, vendored from the AppGate repo.
+
+    Wording rule (CLAUDE.md, Threat model): AppGate provides friction, not
+    security. No "blocking", "preventing" or "locking out" in user-facing text.
+-->
+<resources>
+    <string name="appgate_shortcut_label">Gate</string>
+    <string name="appgate_sheet_title">Gate settings</string>
+    <string name="appgate_not_gated">Not gated yet.</string>
+    <string name="appgate_remove">Remove gate</string>
+
+    <string name="appgate_configure_tier_heading">How much friction?</string>
+    <string name="appgate_configure_friction_heading">Which challenge?</string>
+    <string name="appgate_configure_friction_none">None</string>
+    <string name="appgate_configure_auth_heading">Also ask who you are</string>
+    <string name="appgate_configure_auth_biometric">Your device PIN, pattern or password</string>
+    <string name="appgate_configure_needs_challenge">Pick at least one challenge for this level.</string>
+    <string name="appgate_configure_allowance_heading">Daily allowance</string>
+    <string name="appgate_configure_allowance_unlimited">Unlimited</string>
+    <string name="appgate_configure_allowance_minutes">%1$d minutes a day</string>
+    <string name="appgate_configure_allowance_reset">Once the allowance is used up the app is gated as Locked until it refills, at %1$d AM.</string>
+    <string name="appgate_configure_save">Save gate</string>
+    <string name="appgate_configure_cancel">Cancel</string>
+
+    <string name="appgate_tier_nudge">Nudge</string>
+    <string name="appgate_tier_nudge_body">A reminder screen. One tap to carry on.</string>
+    <string name="appgate_tier_delay">Delay</string>
+    <string name="appgate_tier_delay_body">A short wait before the continue button wakes up.</string>
+    <string name="appgate_tier_effort">Effort</string>
+    <string name="appgate_tier_effort_body">A task to finish first, so opening the app is not muscle memory.</string>
+    <string name="appgate_tier_commitment">Commitment</string>
+    <string name="appgate_tier_commitment_body">A task, plus what you are opening it for and how long you want.</string>
+    <string name="appgate_tier_locked">Locked</string>
+    <string name="appgate_tier_locked_body">No way past the gate while it is on. Changing the tier here is the only route, and it takes effect at once for now.</string>
+
+    <string name="appgate_friction_breathing">Breathing timer</string>
+    <string name="appgate_friction_effort">Typed phrase or maths</string>
+    <string name="appgate_friction_intent">Say what it is for</string>
+
+    <string name="appgate_detection_notice">Gates apply to apps you open from this launcher. Opening the same app from recents, a notification or a link goes straight through.</string>
+
+    <string name="appgate_challenge_opening">Opening %1$s</string>
+    <string name="appgate_challenge_step">Step %1$d of %2$d</string>
+    <string name="appgate_challenge_continue">Continue</string>
+    <string name="appgate_challenge_not_now">Not now</string>
+    <string name="appgate_challenge_nudge_body">You gated this app. A moment before you carry on.</string>
+    <string name="appgate_challenge_delay_body">Breathe. The continue button wakes up when the timer runs out.</string>
+    <string name="appgate_challenge_effort_sum">What is %1$d + %2$d?</string>
+    <string name="appgate_challenge_effort_phrase">Type this out:</string>
+    <string name="appgate_challenge_intent_prompt">What are you opening %1$s for?</string>
+    <string name="appgate_challenge_length_prompt">How long do you want?</string>
+    <string name="appgate_challenge_length_minutes">%1$d minutes</string>
+
+    <string name="appgate_auth_title">AppGate</string>
+    <string name="appgate_auth_description">Confirm it is you before opening %1$s</string>
+
+    <string name="appgate_denied_locked">This gate is set to Locked, so there is no way past it here. Change the tier in the app\'s long-press menu if you mean to.</string>
+    <string name="appgate_denied_budget">You have used your daily allowance for this app. It refills at %1$d AM.</string>
+    <string name="appgate_denied_back">Back</string>
+
+    <string name="appgate_session_channel_name">Session reminders</string>
+    <string name="appgate_session_channel_description">Warns you shortly before a gated app session runs out.</string>
+    <string name="appgate_session_ending_title">%1$d minute left</string>
+    <string name="appgate_session_ending_text">Your %1$s session ends in %2$d minute.</string>
+
+    <string-array name="appgate_effort_phrases">
+        <item>I chose to put a gate here</item>
+        <item>This is not what I sat down to do</item>
+        <item>I have somewhere else to be</item>
+        <item>One deliberate minute, not ten by accident</item>
+        <item>I asked for this friction</item>
+        <item>Nothing here is waiting for me</item>
+    </string-array>
+</resources>
