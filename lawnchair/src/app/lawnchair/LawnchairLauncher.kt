@@ -174,7 +174,7 @@ class LawnchairLauncher : QuickstepLauncher() {
 
         // Repaint icons when the gated-app set changes, so a Gate saved from
         // the long-press menu shows its indicator straight away.
-        AppGate.getInstance(this).gatedTiers.onEach {
+        AppGate.getInstance(this).badges.onEach {
             invalidateGateIndicators()
         }.launchIn(scope = lifecycleScope)
 

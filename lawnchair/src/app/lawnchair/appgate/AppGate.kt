@@ -75,11 +75,11 @@ class AppGate(private val context: Context) {
     private val policyEngine = GatePolicyEngine(clock)
 
     private val _gates = MutableStateFlow<List<Gate>>(emptyList())
-    private val _gatedTiers = MutableStateFlow<Map<GateKey, Tier>>(emptyMap())
+    private val _badges = MutableStateFlow<Map<GateKey, GateBadgeState>>(emptyMap())
     private val _sessions = MutableStateFlow<List<Session>>(emptyList())
 
     /** Enabled gates only, keyed by (packageName, profile). Read on the draw path. */
-    val gatedTiers: StateFlow<Map<GateKey, Tier>> = _gatedTiers.asStateFlow()
+    val badges: StateFlow<Map<GateKey, GateBadgeState>> = _badges.asStateFlow()
 
     private val gatesLoaded = CompletableDeferred<Unit>()
     private val sessionsLoaded = CompletableDeferred<Unit>()
@@ -88,14 +88,14 @@ class AppGate(private val context: Context) {
         scope.launch {
             repository.observeGates().collect { gates ->
                 _gates.value = gates
-                recomputeTiers()
+                recomputeBadges()
                 gatesLoaded.complete(Unit)
             }
         }
         scope.launch {
             sessionRepository.observeRecentSessions().collect { sessions ->
                 _sessions.value = sessions
-                recomputeTiers()
+                recomputeBadges()
                 sessionsLoaded.complete(Unit)
             }
         }
@@ -105,22 +105,50 @@ class AppGate(private val context: Context) {
     }
 
     /**
-     * The Tier shown on the icon. A gate whose daily allowance is spent reads
-     * as LOCKED here, because that is what it behaves like until the allowance
+     * What the icon should say. A gate whose daily allowance is spent reads as
+     * LOCKED here, because that is what it behaves like until the allowance
      * refills — the indicator should not claim otherwise.
+     *
+     * Recomputed whenever gates or sessions change and on every launcher
+     * resume, which is also what keeps [GateBadgeState.allowanceMinutesLeft]
+     * current: minutes tick down while the user is inside the app, but the
+     * icon is not on screen then, and it is refreshed by the time it is.
      */
-    private fun recomputeTiers() {
+    private fun recomputeBadges() {
         val now = clock.instant()
-        _gatedTiers.value = _gates.value
+        _badges.value = _gates.value
             .filter { it.enabled }
             .mapNotNull { gate ->
                 // A profile that no longer resolves (removed, or a Private
                 // Space we cannot see right now) is skipped rather than being
                 // treated as the main profile.
                 val user = userManager.toUserHandleOrNull(gate.target.user) ?: return@mapNotNull null
-                val tier = if (isAllowanceSpent(gate, now)) Tier.LOCKED else gate.config.tier
-                GateKey(gate.target.packageName, user) to tier
+                val minutesLeft = allowanceMinutesLeft(gate, now)
+                val state = GateBadgeState(
+                    tier = if (minutesLeft == 0) Tier.LOCKED else gate.config.tier,
+                    allowanceMinutesLeft = minutesLeft,
+                )
+                GateKey(gate.target.packageName, user) to state
             }.toMap()
+    }
+
+    /**
+     * Whole minutes left of today's allowance, or null when this gate has no
+     * daily allowance. Rounded up, so it only reads zero once the allowance is
+     * genuinely gone — and zero is exactly when the policy engine starts
+     * denying, so the number and the behaviour agree.
+     */
+    private fun allowanceMinutesLeft(gate: Gate, now: Instant): Int? {
+        val budget = gate.config.budget as? Budget.DailyTime ?: return null
+        if (isAllowanceSpent(gate, now)) return 0
+        val used = timeUsedSince(
+            sessions = _sessions.value.filter { it.target == gate.target },
+            windowStart = dayStart(now, clock.zone, budget.resetHour),
+            now = now,
+        )
+        val secondsLeft = budget.maxTotal.minus(used).seconds
+        if (secondsLeft <= 0) return 0
+        return ((secondsLeft + 59) / 60).toInt()
     }
 
     private fun isAllowanceSpent(gate: Gate, now: Instant): Boolean {
@@ -135,9 +163,9 @@ class AppGate(private val context: Context) {
         )
     }
 
-    /** The Tier gating this app right now, or null if it is not gated. */
-    fun tierFor(packageName: String, user: UserHandle): Tier? =
-        _gatedTiers.value[GateKey(packageName, user)]
+    /** What to draw on this app's icon right now, or null if it is not gated. */
+    fun badgeFor(packageName: String, user: UserHandle): GateBadgeState? =
+        _badges.value[GateKey(packageName, user)]
 
     fun gateFor(gates: List<Gate>, target: Target): Gate? = gates.firstOrNull { it.target == target }
 
@@ -231,7 +259,7 @@ class AppGate(private val context: Context) {
         _gates.value.forEach { GateNotifications.cancelSessionWarning(context, it.target) }
         // Time has passed since the last emission; an allowance may have run
         // out or refilled, and the icons should say so.
-        recomputeTiers()
+        recomputeBadges()
     }
 
     fun hasActiveSession(target: Target): Boolean {
@@ -275,6 +303,19 @@ class AppGate(private val context: Context) {
 
     data class GateKey(val packageName: String, val user: UserHandle)
 
+    /**
+     * What the icon indicator draws.
+     *
+     * @property tier the Tier the gate *behaves* as, not necessarily the
+     *   configured one — a spent allowance reads as LOCKED.
+     * @property allowanceMinutesLeft whole minutes left of today's allowance,
+     *   or null when this gate has no daily allowance.
+     */
+    data class GateBadgeState(
+        val tier: Tier,
+        val allowanceMinutesLeft: Int?,
+    )
+
     companion object {
         private const val DB_NAME = "appgate.db"
         private const val SNAPSHOT_WAIT_MILLIS = 400L
@@ -291,4 +332,4 @@ class AppGate(private val context: Context) {
 }
 
 /** Convenience for the launch path, which only cares whether a gate exists at all. */
-fun AppGate.isGated(packageName: String, user: UserHandle): Boolean = tierFor(packageName, user) != null
+fun AppGate.isGated(packageName: String, user: UserHandle): Boolean = badgeFor(packageName, user) != null
