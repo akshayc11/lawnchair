@@ -111,6 +111,11 @@ data object Predictions : PreferenceRoute, PreferenceDeepLink {
 data object DismissedPredictionApps : PreferenceRoute
 
 @Serializable
+data object SettingsSearch : PreferenceRoute, PreferenceDeepLink {
+    override val deepLink = "$URI/settings-search"
+}
+
+@Serializable
 data object DebugMenu : PreferenceRootRoute
 
 @Serializable

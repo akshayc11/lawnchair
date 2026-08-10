@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.lawnchair.preferences.PreferenceAdapter
 import app.lawnchair.ui.preferences.components.layout.ExpandAndShrink
+import app.lawnchair.ui.preferences.search.RegisterSearchableSetting
 import app.lawnchair.ui.theme.LawnchairTheme
 import app.lawnchair.ui.util.preview.PreferenceGroupPreviewContainer
 import app.lawnchair.ui.util.preview.PreviewLawnchair
@@ -104,6 +105,7 @@ fun MainSwitchPreference(
     enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit,
 ) {
+    RegisterSearchableSetting(label)
     val contentPadding = 16.dp // This must match [PreferenceGroup]'s padding
     val interactionSource = remember { MutableInteractionSource() }
     val mMSDLPlayerWrapper = MSDLPlayerWrapper.INSTANCE.get(LocalContext.current)

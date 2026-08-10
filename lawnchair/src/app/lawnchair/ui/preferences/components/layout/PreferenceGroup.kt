@@ -29,6 +29,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.heading
@@ -36,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.lawnchair.ui.preferences.search.LocalSettingsSearchGroup
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -58,7 +60,9 @@ fun PreferenceGroup(
                 .clip(MaterialTheme.shapes.large),
             verticalArrangement = Arrangement.spacedBy(itemSpacing),
         ) {
-            content()
+            CompositionLocalProvider(LocalSettingsSearchGroup provides heading) {
+                content()
+            }
         }
         PreferenceGroupDescription(description = description, showDescription = showDescription)
     }

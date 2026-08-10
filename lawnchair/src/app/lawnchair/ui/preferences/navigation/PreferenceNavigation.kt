@@ -2,6 +2,7 @@ package app.lawnchair.ui.preferences.navigation
 
 import android.content.Intent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -19,42 +20,28 @@ import app.lawnchair.backup.ui.restoreNovaBackupGraph
 import app.lawnchair.preferences.BasePreferenceManager
 import app.lawnchair.preferences.preferenceManager
 import app.lawnchair.ui.preferences.LocalIsExpandedScreen
-import app.lawnchair.ui.preferences.about.About
 import app.lawnchair.ui.preferences.about.acknowledgements.Acknowledgements
 import app.lawnchair.ui.preferences.components.colorpreference.ColorPreferenceModelList
 import app.lawnchair.ui.preferences.components.colorpreference.ColorSelection
 import app.lawnchair.ui.preferences.components.search.SearchProviderId
 import app.lawnchair.ui.preferences.components.search.SearchProviderPreferenceScreen
-import app.lawnchair.ui.preferences.destinations.AppDrawerFoldersPreference
-import app.lawnchair.ui.preferences.destinations.AppDrawerPreferences
-import app.lawnchair.ui.preferences.destinations.BackupAndRestorePreference
 import app.lawnchair.ui.preferences.destinations.CustomIconShapePreference
 import app.lawnchair.ui.preferences.destinations.DebugMenuPreferences
 import app.lawnchair.ui.preferences.destinations.DismissedPredictionAppsPreferences
-import app.lawnchair.ui.preferences.destinations.DockPreferences
 import app.lawnchair.ui.preferences.destinations.DummyPreference
-import app.lawnchair.ui.preferences.destinations.ExperimentalFeaturesPreferences
 import app.lawnchair.ui.preferences.destinations.FeatureFlagsPreference
-import app.lawnchair.ui.preferences.destinations.FolderPreferences
 import app.lawnchair.ui.preferences.destinations.FontSelection
-import app.lawnchair.ui.preferences.destinations.GeneralPreferences
-import app.lawnchair.ui.preferences.destinations.GesturePreferences
 import app.lawnchair.ui.preferences.destinations.HiddenAppsPreferences
-import app.lawnchair.ui.preferences.destinations.HomeScreenGridPreferences
-import app.lawnchair.ui.preferences.destinations.HomeScreenPreferences
-import app.lawnchair.ui.preferences.destinations.IconPackPreferences
 import app.lawnchair.ui.preferences.destinations.IconPickerPreference
-import app.lawnchair.ui.preferences.destinations.LauncherPopupPreference
 import app.lawnchair.ui.preferences.destinations.PickAppForGesture
-import app.lawnchair.ui.preferences.destinations.PredictionsPreferences
 import app.lawnchair.ui.preferences.destinations.PreferencesDashboard
-import app.lawnchair.ui.preferences.destinations.QuickstepPreferences
 import app.lawnchair.ui.preferences.destinations.SearchPreferences
-import app.lawnchair.ui.preferences.destinations.SearchProviderPreferences
 import app.lawnchair.ui.preferences.destinations.SelectAppsForDrawerFolder
 import app.lawnchair.ui.preferences.destinations.SelectIconPreference
 import app.lawnchair.ui.preferences.destinations.ShapePreference
 import app.lawnchair.ui.preferences.destinations.SmartspacePreferences
+import app.lawnchair.ui.preferences.search.LocalSettingsSearchRoute
+import app.lawnchair.ui.preferences.search.SettingsSearchPreferences
 import com.android.launcher3.util.ComponentKey
 import soup.compose.material.motion.animation.materialSharedAxisXIn
 import soup.compose.material.motion.animation.materialSharedAxisXOut
@@ -107,18 +94,27 @@ fun PreferenceNavigation(
             DummyPreference()
         }
 
-        composable<General>(
-            deepLinks = getDeepLink(General),
-        ) { GeneralPreferences() }
+        // Screens that take no arguments are declared once in [preferenceScreens]
+        // so the settings search indexer can reach them too.
+        preferenceScreens.forEach { screen ->
+            composable(
+                route = screen.kClass,
+                deepLinks = screen.deepLinks,
+            ) {
+                CompositionLocalProvider(LocalSettingsSearchRoute provides screen.route) {
+                    screen.content()
+                }
+            }
+        }
+
+        composable<SettingsSearch>(deepLinks = getDeepLink(SettingsSearch)) { SettingsSearchPreferences() }
+
         composable<GeneralFontSelection> { backStackEntry ->
             val route: GeneralFontSelection = backStackEntry.toRoute()
             val pref = preferenceManager().prefsMap[route.prefKey]
                 as? BasePreferenceManager.FontPref ?: return@composable
             FontSelection(pref)
         }
-        composable<GeneralIconPack>(
-            deepLinks = getDeepLink(GeneralIconPack),
-        ) { IconPackPreferences() }
         composable<GeneralIconShape> { backStackEntry ->
             val route: GeneralIconShape = backStackEntry.toRoute()
             ShapePreference(currentTab = route.selectedId)
@@ -130,31 +126,8 @@ fun PreferenceNavigation(
             CustomIconShapePreference(currentTab = route.selectedId)
         }
 
-        composable<HomeScreen>(
-            deepLinks = getDeepLink(HomeScreen),
-        ) { HomeScreenPreferences() }
-        composable<HomeScreenGrid>(
-            deepLinks = getDeepLink(HomeScreenGrid),
-        ) { HomeScreenGridPreferences() }
-        composable<HomeScreenPopupEditor>(
-            deepLinks = getDeepLink(HomeScreenPopupEditor),
-        ) { LauncherPopupPreference() }
-
-        composable<Dock>(
-            deepLinks = getDeepLink(Dock),
-        ) { DockPreferences() }
-        composable<DockSearchProvider>(
-            deepLinks = getDeepLink(DockSearchProvider),
-        ) { SearchProviderPreferences() }
-
-        composable<Smartspace>(
-            deepLinks = getDeepLink(Smartspace),
-        ) { SmartspacePreferences(fromWidget = false) }
         composable<SmartspaceWidget> { SmartspacePreferences(fromWidget = true) }
 
-        composable<AppDrawer>(
-            deepLinks = getDeepLink(AppDrawer),
-        ) { AppDrawerPreferences() }
         composable<AppDrawerHiddenApps>(
             deepLinks = getDeepLink(AppDrawerHiddenApps),
         ) { HiddenAppsPreferences() }
@@ -163,9 +136,6 @@ fun PreferenceNavigation(
             val folderInfoId = args.getInt("id")
             SelectAppsForDrawerFolder(folderInfoId)
         }
-        composable<AppDrawerFolder>(
-            deepLinks = getDeepLink(AppDrawerFolder),
-        ) { AppDrawerFoldersPreference() }
 
         composable<Search>(
             deepLinks = getDeepLink(Search()),
@@ -180,25 +150,8 @@ fun PreferenceNavigation(
             SearchProviderPreferenceScreen(route.id)
         }
 
-        composable<Folders>(
-            deepLinks = getDeepLink(Folders),
-        ) { FolderPreferences() }
-
-        composable<Gestures>(
-            deepLinks = getDeepLink(Gestures),
-        ) { GesturePreferences() }
         composable<GesturesPickApp> { PickAppForGesture() }
 
-        composable<Quickstep>(
-            deepLinks = getDeepLink(Quickstep),
-        ) { QuickstepPreferences() }
-        composable<BackupAndRestore>(
-            deepLinks = getDeepLink(BackupAndRestore),
-        ) { BackupAndRestorePreference() }
-
-        composable<About>(
-            deepLinks = getDeepLink(About),
-        ) { About() }
         composable<AboutLicenses>(
             deepLinks = getDeepLink(AboutLicenses),
         ) { Acknowledgements() }
@@ -217,12 +170,6 @@ fun PreferenceNavigation(
             IconPickerPreference(packageName = args.packageName)
         }
 
-        composable<ExperimentalFeatures>(
-            deepLinks = getDeepLink(ExperimentalFeatures),
-        ) { ExperimentalFeaturesPreferences() }
-        composable<Predictions>(
-            deepLinks = getDeepLink(Predictions),
-        ) { PredictionsPreferences() }
         composable<DismissedPredictionApps> { DismissedPredictionAppsPreferences() }
         composable<ColorSelection> { backStackEntry ->
             val screen: ColorSelection = backStackEntry.toRoute()

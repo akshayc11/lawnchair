@@ -46,7 +46,9 @@ fun DividerColumn(
         }
 
         val width = constraints.maxWidth
-        val dividersHeight = thicknessPx.roundToInt() * (placeables.size - 1)
+        // With no children at all there is no divider either, and a negative
+        // height is not a legal layout size.
+        val dividersHeight = thicknessPx.roundToInt() * (placeables.size - 1).coerceAtLeast(0)
         val height = placeables.sumOf { it.height } + dividersHeight
 
         layout(width, height) {

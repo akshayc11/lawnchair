@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.lawnchair.preferences.PreferenceAdapter
 import app.lawnchair.ui.preferences.components.layout.PreferenceGroupHeading
+import app.lawnchair.ui.preferences.search.RegisterSearchableSetting
 import app.lawnchair.ui.theme.preferenceGroupColor
 import app.lawnchair.ui.util.addIf
 
@@ -67,6 +68,7 @@ fun SwitchPreferenceWithPreview(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    RegisterSearchableSetting(label)
     Column(modifier) {
         PreferenceGroupHeading(label)
         Row(

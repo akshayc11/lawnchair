@@ -34,6 +34,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.drawable.toDrawable
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.lawnchair.ui.preferences.search.LocalIsSettingsIndexingPass
 import app.lawnchair.ui.util.isPlayStoreFlavor
 import app.lawnchair.util.FileAccessManager
 import app.lawnchair.util.FileAccessState
@@ -50,6 +51,9 @@ fun ColumnScope.WithWallpaper(
     displayWallpaperButton: Boolean = true,
     content: @Composable ColumnScope.(wallpaper: Drawable?) -> Unit,
 ) {
+    // Previews have nothing to contribute to the settings search index, and
+    // loading a wallpaper for one would be wasted work.
+    if (LocalIsSettingsIndexingPass.current) return
     val context = LocalContext.current
     val fileAccessManager = remember { FileAccessManager.getInstance(context) }
     val wallpaperAccessState by fileAccessManager.wallpaperAccessState.collectAsStateWithLifecycle()

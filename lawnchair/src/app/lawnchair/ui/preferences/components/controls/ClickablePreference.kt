@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.lawnchair.ui.ModalBottomSheetContent
 import app.lawnchair.ui.preferences.components.layout.PreferenceTemplate
+import app.lawnchair.ui.preferences.search.RegisterSearchableSetting
 import app.lawnchair.ui.theme.LawnchairTheme
 import app.lawnchair.ui.util.bottomSheetHandler
 import app.lawnchair.ui.util.preview.PreferenceGroupPreviewContainer
@@ -54,6 +55,7 @@ fun ClickablePreference(
     hapticToken: MSDLToken? = MSDLToken.TAP_LOW_EMPHASIS,
     onClick: () -> Unit,
 ) {
+    RegisterSearchableSetting(label, subtitle)
     val bottomSheetHandler = bottomSheetHandler
     val mMSDLPlayerWrapper = MSDLPlayerWrapper.INSTANCE.get(LocalContext.current)
     PreferenceTemplate(

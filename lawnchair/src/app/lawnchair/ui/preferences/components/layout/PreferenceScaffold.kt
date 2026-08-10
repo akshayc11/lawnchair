@@ -23,8 +23,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import app.lawnchair.ui.preferences.search.LocalSettingsSearchScreenLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +53,8 @@ fun PreferenceScaffold(
         },
         bottomBar = bottomBar,
     ) {
-        content(it)
+        CompositionLocalProvider(LocalSettingsSearchScreenLabel provides label) {
+            content(it)
+        }
     }
 }

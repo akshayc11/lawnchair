@@ -257,6 +257,13 @@
     <string name="overlay_none">None</string>
 
     <!--
+    Settings search
+    -->
+    <string name="settings_search_placeholder">Search settings</string>
+    <string name="settings_search_hint">Type to search every setting.</string>
+    <string name="settings_search_no_results">No settings match that.</string>
+
+    <!--
     App suggestions
     -->
     <string name="suggestion_pref_screen_title">Suggestions</string>

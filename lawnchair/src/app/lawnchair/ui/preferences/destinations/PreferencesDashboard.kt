@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.TipsAndUpdates
 import androidx.compose.material3.DropdownMenuGroup
@@ -62,6 +63,7 @@ import app.lawnchair.preferences.preferenceManager
 import app.lawnchair.preferences2.firstCached
 import app.lawnchair.preferences2.preferenceManager2
 import app.lawnchair.ui.OverflowMenuGrouped
+import app.lawnchair.ui.preferences.LocalNavController
 import app.lawnchair.ui.preferences.components.AnnouncementPreference
 import app.lawnchair.ui.preferences.components.controls.PreferenceCategory
 import app.lawnchair.ui.preferences.components.controls.WarningPreference
@@ -85,6 +87,7 @@ import app.lawnchair.ui.preferences.navigation.HomeScreen
 import app.lawnchair.ui.preferences.navigation.PreferenceRootRoute
 import app.lawnchair.ui.preferences.navigation.Quickstep
 import app.lawnchair.ui.preferences.navigation.Search
+import app.lawnchair.ui.preferences.navigation.SettingsSearch
 import app.lawnchair.ui.preferences.navigation.Smartspace
 import app.lawnchair.ui.util.addIf
 import app.lawnchair.util.isDefaultLauncher
@@ -116,7 +119,14 @@ fun PreferencesDashboard(
         modifier = modifier,
         verticalArrangement = Arrangement.Top,
         backArrowVisible = false,
-        actions = { PreferencesOverflowMenu(currentRoute = currentRoute, onNavigate = onNavigate) },
+        actions = {
+            val navController = LocalNavController.current
+            ClickableIcon(
+                imageVector = Icons.Rounded.Search,
+                onClick = { navController.navigate(SettingsSearch) },
+            )
+            PreferencesOverflowMenu(currentRoute = currentRoute, onNavigate = onNavigate)
+        },
     ) {
         AnnouncementPreference()
 

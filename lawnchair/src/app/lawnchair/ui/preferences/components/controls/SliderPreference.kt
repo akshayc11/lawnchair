@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import app.lawnchair.preferences.PreferenceAdapter
 import app.lawnchair.preferences.rememberTransformAdapter
 import app.lawnchair.ui.preferences.components.layout.PreferenceTemplate
+import app.lawnchair.ui.preferences.search.RegisterSearchableSetting
 import app.lawnchair.ui.theme.LawnchairTheme
 import app.lawnchair.ui.util.preview.PreferenceGroupPreviewContainer
 import app.lawnchair.ui.util.preview.PreviewLawnchair
@@ -128,6 +129,7 @@ private fun SliderPreference(
     showUnit: String = "",
     enabled: Boolean = true,
 ) {
+    RegisterSearchableSetting(label)
     var sliderValue by remember { mutableFloatStateOf(value) }
     var thresholdReached by remember { mutableStateOf<SliderThreshold?>(null) }
     val mMSDLPlayerWrapper = MSDLPlayerWrapper.INSTANCE.get(LocalContext.current)
