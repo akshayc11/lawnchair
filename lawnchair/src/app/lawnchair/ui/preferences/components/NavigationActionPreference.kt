@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import app.lawnchair.ui.preferences.LocalNavController
 import app.lawnchair.ui.preferences.components.layout.PreferenceTemplate
 import app.lawnchair.ui.preferences.navigation.PreferenceRoute
+import app.lawnchair.ui.preferences.search.RegisterSearchableSetting
 import app.lawnchair.ui.theme.LawnchairTheme
 import app.lawnchair.ui.util.preview.PreferenceGroupPreviewContainer
 import app.lawnchair.ui.util.preview.PreviewLawnchair
@@ -39,6 +40,7 @@ fun NavigationActionPreference(
     subtitle: String? = null,
     endWidget: (@Composable () -> Unit)? = null,
 ) {
+    RegisterSearchableSetting(label, subtitle)
     val navController = if (destination != null) LocalNavController.current else null
     val mMSDLPlayerWrapper = MSDLPlayerWrapper.INSTANCE.get(LocalContext.current)
 

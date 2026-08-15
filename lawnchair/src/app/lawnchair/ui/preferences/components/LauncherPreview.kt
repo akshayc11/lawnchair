@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import app.lawnchair.LauncherPreviewManager
+import app.lawnchair.ui.preferences.search.LocalIsSettingsIndexingPass
 import app.lawnchair.ui.theme.LawnchairTheme
 import app.lawnchair.util.lifecycleState
 import app.lawnchair.wallpaper.WallpaperColorsCompat
@@ -84,6 +85,9 @@ fun invariantDeviceProfile(): InvariantDeviceProfile {
 @Composable
 fun createPreviewView(idp: InvariantDeviceProfile = invariantDeviceProfile()): View? {
     val context = LocalContext.current
+    // Rendering a launcher preview for a screen that is only being composed to
+    // harvest its labels is pure waste.
+    if (LocalIsSettingsIndexingPass.current) return null
     val lifecycleState = lifecycleState()
     if (!lifecycleState.isAtLeast(Lifecycle.State.RESUMED)) {
         return null

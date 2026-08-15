@@ -32,6 +32,10 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import app.lawnchair.LawnchairApp.Companion.showQuickstepWarningIfNecessary
+import app.lawnchair.appgate.AppGate
+import app.lawnchair.appgate.GateShortcut
+import app.lawnchair.appgate.gateChallengeIntentOrNull
+import app.lawnchair.appgate.invalidateGateIndicators
 import app.lawnchair.compat.LawnchairQuickstepCompat
 import app.lawnchair.data.AppDatabase
 import app.lawnchair.data.wallpaper.service.WallpaperService
@@ -168,6 +172,12 @@ class LawnchairLauncher : QuickstepLauncher() {
         }.launchIn(scope = lifecycleScope)
         launcher.stateManager.addStateListener(clearSearchStateListener)
 
+        // Repaint icons when the gated-app set changes, so a Gate saved from
+        // the long-press menu shows its indicator straight away.
+        AppGate.getInstance(this).badges.onEach {
+            invalidateGateIndicators()
+        }.launchIn(scope = lifecycleScope)
+
         if (prefs.autoLaunchRoot.get()) {
             lifecycleScope.launch {
                 try {
@@ -282,10 +292,30 @@ class LawnchairLauncher : QuickstepLauncher() {
     override fun getSupportedShortcuts(container: Int): Stream<SystemShortcut.Factory<*>> = Stream.concat(
         super.getSupportedShortcuts(container),
         Stream.concat(
-            Stream.of(LawnchairShortcut.UNINSTALL, LawnchairShortcut.CUSTOMIZE, LawnchairShortcut.OPEN_IN_STORE),
+            Stream.of(
+                GateShortcut.GATE,
+                LawnchairShortcut.UNINSTALL,
+                LawnchairShortcut.CUSTOMIZE,
+                LawnchairShortcut.OPEN_IN_STORE,
+            ),
             if (LawnchairApp.isRecentsEnabled) Stream.of(LawnchairShortcut.PAUSE_APPS) else Stream.empty(),
         ),
     )
+
+    /**
+     * Interception point for gated apps. A Gate raised here replaces the launch
+     * with the challenge screen, which starts the app itself once passed;
+     * returning null says "nothing was launched", which is what callers of this
+     * method already handle.
+     */
+    override fun startActivitySafely(v: View?, intent: Intent, item: ItemInfo?): RunnableList? {
+        val challenge = gateChallengeIntentOrNull(item, intent)
+        if (challenge != null) {
+            startActivity(challenge)
+            return null
+        }
+        return super.startActivitySafely(v, intent, item)
+    }
 
     fun updateTheme() {
         if (themeProvider.colorScheme != colorScheme) {
@@ -471,6 +501,11 @@ class LawnchairLauncher : QuickstepLauncher() {
         super.onResume()
         restartIfPending()
         refreshPredictionContainersFromModel()
+
+        // The launcher being on screen means the user is out of whatever gated
+        // app they were in, so that session is over: coming back has to pass
+        // the Gate again.
+        AppGate.getInstance(this).onLauncherResumed()
 
         dragLayer.viewTreeObserver.addOnDrawListener(
             object : ViewTreeObserver.OnDrawListener {

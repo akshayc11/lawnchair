@@ -315,6 +315,13 @@ android {
             }
         }
 
+        // AppGate's JVM unit tests. Pure Kotlin only — nothing here may touch
+        // the Android framework, which is not mocked in unit tests.
+        test {
+            java.srcDirs = ['lawnchair/tests']
+            kotlin.directories.addAll('lawnchair/tests')
+        }
+
         github {
             manifest.srcFile "github/AndroidManifest.xml"
         }
@@ -498,6 +505,11 @@ dependencies {
 
     debugImplementation libs.leakcanary.android
     debugImplementation libs.leakcanary.androidstudio
+
+    // AppGate's JVM unit tests. Test-scoped only, and both are already in the
+    // version catalog.
+    testImplementation libs.junit
+    testImplementation libs.google.truth
 }
 
 ksp {

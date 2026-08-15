@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import app.lawnchair.preferences.PreferenceAdapter
 import app.lawnchair.ui.ModalBottomSheetContent
 import app.lawnchair.ui.preferences.components.layout.PreferenceTemplate
+import app.lawnchair.ui.preferences.search.RegisterSearchableSetting
 import app.lawnchair.ui.theme.LawnchairTheme
 import app.lawnchair.ui.util.bottomSheetHandler
 import app.lawnchair.ui.util.preview.PreferenceGroupPreviewContainer
@@ -57,6 +58,7 @@ fun TextPreference(
     enabled: Boolean = true,
     description: (String) -> String? = { it },
 ) {
+    RegisterSearchableSetting(label)
     val mMSDLPlayerWrapper = MSDLPlayerWrapper.INSTANCE.get(LocalContext.current)
     val bottomSheetHandler = bottomSheetHandler
     PreferenceTemplate(

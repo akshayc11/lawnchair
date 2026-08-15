@@ -56,6 +56,7 @@ import app.lawnchair.ui.preferences.components.controls.SwitchPreference
 import app.lawnchair.ui.preferences.components.layout.ExpandAndShrink
 import app.lawnchair.ui.preferences.components.layout.PreferenceGroup
 import app.lawnchair.ui.preferences.components.layout.PreferenceLayout
+import app.lawnchair.ui.preferences.search.LocalIsSettingsIndexingPass
 import app.lawnchair.ui.theme.isSelectedThemeDark
 import app.lawnchair.ui.theme.preferenceGroupColor
 import com.android.launcher3.R
@@ -174,6 +175,9 @@ fun SmartspaceProviderPreference(
 fun SmartspacePreview(
     modifier: Modifier = Modifier,
 ) {
+    // The preview inflates a smartspace and kicks off provider setup, neither of
+    // which an off-screen indexing pass has any business doing.
+    if (LocalIsSettingsIndexingPass.current) return
     val themeRes = if (isSelectedThemeDark) R.style.AppTheme_Dark else R.style.AppTheme_DarkText
     val context = LocalContext.current
     val themedContext = remember(themeRes) { ContextThemeWrapper(context, themeRes) }

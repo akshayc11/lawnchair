@@ -1,0 +1,56 @@
+package app.lawnchair.ui.preferences.search
+
+import app.lawnchair.ui.preferences.navigation.PreferenceRoute
+
+/**
+ * A single searchable setting.
+ *
+ * Entries are not written by hand: they are harvested from the preference
+ * controls while a screen is composed, so a newly added preference becomes
+ * searchable without touching the search feature.
+ */
+data class SettingsSearchEntry(
+    val label: String,
+    val description: String?,
+    val screenLabel: String,
+    val groupHeading: String?,
+    val route: PreferenceRoute,
+) {
+    val key: String get() = "$route|$screenLabel|$label"
+
+    /** Where the setting lives, e.g. `Home screen › Layout`. */
+    val breadcrumb: String get() = listOfNotNull(screenLabel, groupHeading).joinToString(BREADCRUMB_SEPARATOR)
+
+    /** The breadcrumb with the setting itself on the end, e.g. `Home screen › Layout › Show labels`. */
+    val path: String get() = (listOfNotNull(screenLabel, groupHeading) + label).joinToString(BREADCRUMB_SEPARATOR)
+
+    companion object {
+        const val BREADCRUMB_SEPARATOR = " › "
+    }
+}
+
+/**
+ * Ranked, case-insensitive substring search over harvested settings.
+ *
+ * A label match always beats a match on the screen or group the setting lives
+ * in, which in turn beats a match in the setting's own description text.
+ */
+fun searchSettings(query: String, entries: List<SettingsSearchEntry>): List<SettingsSearchEntry> {
+    val needle = query.trim().lowercase()
+    if (needle.isEmpty()) return emptyList()
+    return entries
+        .mapNotNull { entry -> rankOf(needle, entry)?.let { rank -> entry to rank } }
+        .sortedWith(compareBy({ it.second }, { it.first.label.lowercase() }, { it.first.screenLabel.lowercase() }))
+        .map { it.first }
+}
+
+private fun rankOf(needle: String, entry: SettingsSearchEntry): Int? {
+    val label = entry.label.lowercase()
+    return when {
+        label.startsWith(needle) -> 0
+        label.contains(needle) -> 1
+        entry.breadcrumb.lowercase().contains(needle) -> 2
+        entry.description?.lowercase()?.contains(needle) == true -> 3
+        else -> null
+    }
+}

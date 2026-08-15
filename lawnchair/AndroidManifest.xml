@@ -40,6 +40,9 @@
     <uses-permission android:name="android.permission.SUSPEND_APPS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
 
+    <!-- AppGate: the one-minute warning before a gated session runs out. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- Support non-cellular enabled devices -->
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
@@ -123,6 +126,31 @@
         <activity
             android:name="app.lawnchair.BlankActivity"
             android:theme="@style/Theme.Transparent" />
+
+        <!-- AppGate: the Gate screen, and the alarm that warns a session is nearly up. -->
+        <activity
+            android:name="app.lawnchair.appgate.GateChallengeActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Lawnchair" />
+
+        <receiver
+            android:name="app.lawnchair.appgate.SessionWarningReceiver"
+            android:exported="false" />
+
+        <!-- AppGate: the takeover shown over the app when its session runs out. -->
+        <activity
+            android:name="app.lawnchair.appgate.SessionExpiredActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Lawnchair" />
+
+        <receiver
+            android:name="app.lawnchair.appgate.SessionExpiryReceiver"
+            android:exported="false" />
 
         <activity
             android:name="app.lawnchair.smartspace.SmartspacePreferencesShortcut"

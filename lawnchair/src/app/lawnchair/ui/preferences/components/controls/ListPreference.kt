@@ -35,6 +35,7 @@ import app.lawnchair.preferences.PreferenceAdapter
 import app.lawnchair.ui.ModalBottomSheetContent
 import app.lawnchair.ui.preferences.components.layout.PreferenceDivider
 import app.lawnchair.ui.preferences.components.layout.PreferenceTemplate
+import app.lawnchair.ui.preferences.search.RegisterSearchableSetting
 import app.lawnchair.ui.theme.LawnchairTheme
 import app.lawnchair.ui.util.bottomSheetHandler
 import app.lawnchair.ui.util.preview.PreferenceGroupPreviewContainer
@@ -77,6 +78,7 @@ fun <T> ListPreference(
     description: String? = null,
     endWidget: (@Composable () -> Unit)? = null,
 ) {
+    RegisterSearchableSetting(label, description)
     val bottomSheetHandler = bottomSheetHandler
     val currentDescription = description ?: entries
         .firstOrNull { it.value == value }

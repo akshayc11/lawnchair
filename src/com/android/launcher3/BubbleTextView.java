@@ -110,6 +110,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
+import app.lawnchair.appgate.GateBadge;
 import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
 import app.lawnchair.font.FontManager;
 import app.lawnchair.gestures.IconGestureListener;
@@ -222,6 +223,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
     private final int mRunningAppIndicatorTopMargin;
     private final Paint mRunningAppIndicatorPaint;
     private final Rect mRunningAppIconBounds = new Rect();
+    private final Rect mGateIndicatorIconBounds = new Rect();
     private RunningAppState mRunningAppState;
 
     @ViewDebug.ExportedProperty(category = "launcher")
@@ -920,9 +922,42 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
 
     @Override
     public void onDraw(Canvas canvas) {
+        applyGateDimIfNecessary();
         super.onDraw(canvas);
         drawDotIfNecessary(canvas);
         drawRunningAppIndicatorIfNecessary(canvas);
+        drawGateIndicatorIfNecessary(canvas);
+    }
+
+    /**
+     * Greys the icon out while AppGate has the app locked, the same treatment a
+     * suspended app gets. Applied here rather than when the icon is bound
+     * because the locked state changes without a rebind - a daily allowance
+     * runs out - and the repaint that follows only reaches onDraw.
+     *
+     * The launcher's own reasons for greying an icon are kept: this can only
+     * add the disabled look, never take it away.
+     */
+    private void applyGateDimIfNecessary() {
+        if (mIcon == null || !(getTag() instanceof ItemInfo info)) {
+            return;
+        }
+        setIconDisabled(GateBadge.isLockedOut(getContext(), info)
+                || (info instanceof ItemInfoWithIcon iiwi && isIconDisabled(iiwi)));
+    }
+
+    /**
+     * Draws AppGate's gated-app indicator in the top left corner of the icon
+     * bounds. Visual only; configuring a Gate lives in the long-press menu.
+     */
+    protected void drawGateIndicatorIfNecessary(Canvas canvas) {
+        if (!(getTag() instanceof ItemInfo)) {
+            return;
+        }
+        getIconBounds(mGateIndicatorIconBounds);
+        Utilities.scaleRectAboutCenter(mGateIndicatorIconBounds, ICON_VISIBLE_AREA_FACTOR);
+        GateBadge.draw(canvas, getContext(), (ItemInfo) getTag(), mGateIndicatorIconBounds,
+                getScrollX(), getScrollY());
     }
 
     /**
