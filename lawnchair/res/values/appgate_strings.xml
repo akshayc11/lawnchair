@@ -72,6 +72,35 @@
     <string name="appgate_session_ending_title">%1$d minute left</string>
     <string name="appgate_session_ending_text">Your %1$s session ends in %2$d minute.</string>
 
+    <string name="appgate_session_over_title">Time is up</string>
+    <string name="appgate_session_over_body">Your %1$s session has run out. Opening it again asks for the gate again.</string>
+    <string name="appgate_session_over_intent">You opened %1$s to: %2$s</string>
+    <string name="appgate_session_over_done">Done</string>
+    <string name="appgate_session_over_wrap_up">One more minute to wrap up</string>
+
+    <string name="appgate_stats_title">Gated apps</string>
+    <string name="appgate_stats_entry_description">Your gates, and the time that has gone into each.</string>
+    <string name="appgate_stats_none">No gates yet</string>
+    <string name="appgate_stats_none_body">Long-press an app icon and choose Gate to add one.</string>
+    <string name="appgate_stats_row_summary">%1$s today · %2$d sessions · %3$s</string>
+    <string name="appgate_stats_today">Today</string>
+    <string name="appgate_stats_today_of_allowance">Today of %1$s</string>
+    <string name="appgate_stats_sessions_today">Sessions today</string>
+    <string name="appgate_stats_daily_average">Daily average</string>
+    <string name="appgate_stats_week_heading">Last 7 days</string>
+    <string name="appgate_stats_totals_heading">Totals</string>
+    <string name="appgate_stats_week_total">Time in app</string>
+    <string name="appgate_stats_longest_session">Longest session</string>
+    <string name="appgate_stats_week_sessions">Sessions</string>
+    <string name="appgate_stats_gate_heading">This gate</string>
+    <string name="appgate_stats_gate_tier">Level</string>
+    <string name="appgate_stats_allowance_line">The line marks your daily allowance, %1$s.</string>
+    <string name="appgate_stats_window_note">Days start at 5 AM, and sessions older than a week are deleted. Time counts only while the app is in front and the screen is on.</string>
+    <string name="appgate_stats_minutes">%1$d min</string>
+    <string name="appgate_stats_hours">%1$d h</string>
+    <string name="appgate_stats_hours_minutes">%1$d h %2$d min</string>
+    <string name="appgate_stats_sheet_heading">Time in this app</string>
+
     <string-array name="appgate_effort_phrases">
         <item>I chose to put a gate here</item>
         <item>This is not what I sat down to do</item>

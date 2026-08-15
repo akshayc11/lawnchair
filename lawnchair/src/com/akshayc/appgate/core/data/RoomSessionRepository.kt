@@ -4,6 +4,7 @@ import com.akshayc.appgate.core.data.db.SessionDao
 import com.akshayc.appgate.core.data.db.toEntity
 import com.akshayc.appgate.core.data.db.toSessionOrNull
 import com.akshayc.appgate.core.model.Session
+import com.akshayc.appgate.core.model.Target
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -43,6 +44,61 @@ internal class RoomSessionRepository(
     ) = withContext(io) {
         dao.endActive(atMillis = at.toEpochMilli(), startedBeforeMillis = startedBefore.toEpochMilli())
     }
+
+    override suspend fun wrapUpSession(
+        target: Target,
+        newEndsAt: Instant,
+    ): Boolean =
+        withContext(io) {
+            dao.wrapUpNewest(
+                packageName = target.packageName,
+                userId = target.user.value,
+                newEndsAtMillis = newEndsAt.toEpochMilli(),
+            ) > 0
+        }
+
+    override suspend fun pauseSession(
+        target: Target,
+        at: Instant,
+    ): Boolean =
+        withContext(io) {
+            dao.pauseNewest(
+                packageName = target.packageName,
+                userId = target.user.value,
+                atMillis = at.toEpochMilli(),
+            ) > 0
+        }
+
+    override suspend fun settlePause(
+        target: Target,
+        at: Instant,
+        stillPaused: Boolean,
+    ): Boolean =
+        withContext(io) {
+            dao.settleNewest(
+                packageName = target.packageName,
+                userId = target.user.value,
+                atMillis = at.toEpochMilli(),
+                newPausedAtMillis = if (stillPaused) at.toEpochMilli() else null,
+            ) > 0
+        }
+
+    override suspend fun endNewestSession(
+        target: Target,
+        at: Instant,
+    ): Boolean =
+        withContext(io) {
+            dao.endNewest(
+                packageName = target.packageName,
+                userId = target.user.value,
+                atMillis = at.toEpochMilli(),
+            ) > 0
+        }
+
+    override suspend fun latestIntentText(target: Target): String? =
+        withContext(io) {
+            dao.newestIntentText(packageName = target.packageName, userId = target.user.value)
+        }
 
     override suspend fun pruneBefore(before: Instant) =
         withContext(io) {

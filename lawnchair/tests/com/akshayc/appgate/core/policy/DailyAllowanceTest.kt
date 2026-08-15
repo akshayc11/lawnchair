@@ -113,6 +113,80 @@ class DailyAllowanceTest {
     }
 
     @Test
+    fun `time the session was paused for is not charged to the allowance`() {
+        val budget = Budget.DailyTime(maxTotal = Duration.ofMinutes(30), resetHour = resetHour)
+        // Half an hour of wall clock, twenty minutes of it with the screen off
+        // or another app in front: ten minutes used, allowance not spent.
+        val halfAway = Session(
+            target,
+            startedAt = localInstant("2026-08-04T09:00"),
+            endsAt = localInstant("2026-08-04T09:30"),
+            pausedMillis = Duration.ofMinutes(20).toMillis(),
+        )
+
+        val exhausted = isBudgetExhausted(
+            budget = budget,
+            recentSessions = listOf(halfAway),
+            activeSession = null,
+            now = localInstant("2026-08-04T12:00"),
+            zone = zone,
+        )
+
+        assertThat(exhausted).isFalse()
+    }
+
+    @Test
+    fun `an open pause stops the allowance ticking down`() {
+        val budget = Budget.DailyTime(maxTotal = Duration.ofMinutes(30), resetHour = resetHour)
+        // Started an hour ago, paused after ten minutes and still paused: only
+        // those ten minutes are used, however long the screen stays off.
+        val paused = Session(
+            target,
+            startedAt = localInstant("2026-08-04T11:00"),
+            endsAt = localInstant("2026-08-04T13:00"),
+            pausedAt = localInstant("2026-08-04T11:10"),
+        )
+
+        val exhausted = isBudgetExhausted(
+            budget = budget,
+            recentSessions = emptyList(),
+            activeSession = paused,
+            now = localInstant("2026-08-04T12:00"),
+            zone = zone,
+        )
+
+        assertThat(exhausted).isFalse()
+    }
+
+    @Test
+    fun `paused time cannot credit back more than the session used`() {
+        val budget = Budget.DailyTime(maxTotal = Duration.ofMinutes(30), resetHour = resetHour)
+        // Pause longer than the part of the session inside the window: the
+        // answer is zero used, never a negative that pays for other sessions.
+        val straddling = Session(
+            target,
+            startedAt = localInstant("2026-08-04T04:00"),
+            endsAt = localInstant("2026-08-04T05:10"),
+            pausedMillis = Duration.ofMinutes(60).toMillis(),
+        )
+        val spendsItAll = Session(
+            target,
+            startedAt = localInstant("2026-08-04T09:00"),
+            endsAt = localInstant("2026-08-04T09:30"),
+        )
+
+        val exhausted = isBudgetExhausted(
+            budget = budget,
+            recentSessions = listOf(straddling, spendsItAll),
+            activeSession = null,
+            now = localInstant("2026-08-04T12:00"),
+            zone = zone,
+        )
+
+        assertThat(exhausted).isTrue()
+    }
+
+    @Test
     fun `a spent allowance denies the open rather than challenging it`() {
         val budget = Budget.DailyTime(maxTotal = Duration.ofMinutes(15), resetHour = resetHour)
         val engine = GatePolicyEngine(Clock.fixed(localInstant("2026-08-04T12:00"), zone))

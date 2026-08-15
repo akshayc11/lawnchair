@@ -52,6 +52,16 @@ internal fun dayStart(
     return if (boundary.toInstant().isAfter(now)) boundary.minusDays(1).toInstant() else boundary.toInstant()
 }
 
+/**
+ * Time the session was actually being used inside the window: wall clock less
+ * the stretches it was paused for, never below zero.
+ *
+ * Settled pause time is a single total with no timestamps of its own, so for a
+ * session straddling the window start the whole of it is subtracted. That can
+ * only under-count use, which is the direction to be wrong in (Safety
+ * invariants, fail open) and only matters for a session running across a daily
+ * reset hour.
+ */
 private fun timeInWindow(
     session: Session,
     windowStart: Instant,
@@ -59,5 +69,7 @@ private fun timeInWindow(
 ): Duration {
     val start = maxOf(session.startedAt, windowStart)
     val end = minOf(session.effectiveEnd, now)
-    return if (end.isBefore(start)) Duration.ZERO else Duration.between(start, end)
+    if (end.isBefore(start)) return Duration.ZERO
+    val used = Duration.between(start, end).minus(session.pausedTimeUpTo(end))
+    return if (used.isNegative) Duration.ZERO else used
 }

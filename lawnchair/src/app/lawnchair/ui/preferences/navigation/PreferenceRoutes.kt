@@ -110,6 +110,16 @@ data object Predictions : PreferenceRoute, PreferenceDeepLink {
 @Serializable
 data object DismissedPredictionApps : PreferenceRoute
 
+/** The list of configured gates, with how much time has gone into each. */
+@Serializable
+data object AppGateStats : PreferenceRoute, PreferenceDeepLink {
+    override val deepLink = "$URI/appgate-stats"
+}
+
+/** Daily figures for one gated app. Profile id included: same package in another profile is another Target. */
+@Serializable
+data class AppGateAppStats(val packageName: String, val userId: Long) : PreferenceRoute
+
 @Serializable
 data object SettingsSearch : PreferenceRoute, PreferenceDeepLink {
     override val deepLink = "$URI/settings-search"

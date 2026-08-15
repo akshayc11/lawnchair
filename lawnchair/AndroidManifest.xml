@@ -139,6 +139,19 @@
             android:name="app.lawnchair.appgate.SessionWarningReceiver"
             android:exported="false" />
 
+        <!-- AppGate: the takeover shown over the app when its session runs out. -->
+        <activity
+            android:name="app.lawnchair.appgate.SessionExpiredActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Lawnchair" />
+
+        <receiver
+            android:name="app.lawnchair.appgate.SessionExpiryReceiver"
+            android:exported="false" />
+
         <activity
             android:name="app.lawnchair.smartspace.SmartspacePreferencesShortcut"
             android:theme="@style/Theme.Transparent" />

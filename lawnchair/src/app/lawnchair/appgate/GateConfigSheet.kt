@@ -72,6 +72,54 @@ fun GateConfigSheet(
     scrollState: ScrollState,
     onClose: () -> Unit,
 ) {
+    Column(
+        modifier = Modifier
+            // The sheet is tall enough to reach the top of the screen, so the
+            // content is inset out from under the status bar. Applied before
+            // the scroll modifier so the inset is the viewport edge and does
+            // not scroll away with the content.
+            .statusBarsPadding()
+            // Also before verticalScroll, so the scrollbar measures against the
+            // viewport and stays put instead of scrolling with the content.
+            .verticalScrollbar(scrollState, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp),
+    ) {
+        Text(
+            text = appLabel.ifBlank { target.packageName },
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        Text(
+            text = stringResource(R.string.appgate_sheet_title),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        GateConfigControls(
+            target = target,
+            showUsage = true,
+            onSaved = onClose,
+            onRemoved = onClose,
+            onCancel = onClose,
+        )
+    }
+}
+
+/**
+ * The Gate's own controls, without a container: the sheet wraps them in its own
+ * scrolling column, the stats screen drops them into a preference group. Both
+ * edit the same Gate, so there is one copy of the form.
+ */
+@Composable
+internal fun GateConfigControls(
+    target: Target,
+    modifier: Modifier = Modifier,
+    showUsage: Boolean = false,
+    onSaved: () -> Unit = {},
+    onRemoved: () -> Unit = {},
+    onCancel: (() -> Unit)? = null,
+) {
     val context = LocalContext.current
     val appGate = remember { AppGate.getInstance(context) }
     val scope = rememberCoroutineScope()
@@ -105,30 +153,27 @@ fun GateConfigSheet(
     val escalationApplies = tier < ESCALATION_CAP && !(friction == null && requireAuth)
 
     Column(
-        modifier = Modifier
-            // The sheet is tall enough to reach the top of the screen, so the
-            // content is inset out from under the status bar. Applied before
-            // the scroll modifier so the inset is the viewport edge and does
-            // not scroll away with the content.
-            .statusBarsPadding()
-            // Also before verticalScroll, so the scrollbar measures against the
-            // viewport and stays put instead of scrolling with the content.
-            .verticalScrollbar(scrollState, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(
-            text = appLabel.ifBlank { target.packageName },
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        Text(
-            text = stringResource(R.string.appgate_sheet_title),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
+        // Only once this app has a Gate: before that every figure is zero, and
+        // an empty chart says nothing worth the space.
+        existing?.takeIf { showUsage }?.let { gate ->
+            val usage = rememberTargetUsage(target, resetHourOf(gate))
+            Heading(R.string.appgate_stats_sheet_heading)
+            UsageSummary(
+                usage = usage,
+                allowanceMinutes = dailyMinutes,
+                modifier = Modifier.padding(vertical = 4.dp),
+            )
+            UsageBarChart(
+                usage = usage,
+                zone = appGate.zone,
+                allowanceMinutes = dailyMinutes,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+        }
 
         Heading(R.string.appgate_configure_tier_heading)
         Tier.entries.forEach { entry ->
@@ -261,15 +306,17 @@ fun GateConfigSheet(
                     onClick = {
                         scope.launch {
                             appGate.repository.removeGate(target)
-                            onClose()
+                            onRemoved()
                         }
                     },
                 ) {
                     Text(stringResource(R.string.appgate_remove))
                 }
             }
-            TextButton(onClick = onClose) {
-                Text(stringResource(R.string.appgate_configure_cancel))
+            onCancel?.let { cancel ->
+                TextButton(onClick = cancel) {
+                    Text(stringResource(R.string.appgate_configure_cancel))
+                }
             }
             TextButton(
                 enabled = satisfiesConstraint,
@@ -291,7 +338,7 @@ fun GateConfigSheet(
                     )
                     scope.launch {
                         appGate.repository.upsertGate(Gate(target = target, config = config))
-                        onClose()
+                        onSaved()
                     }
                 },
             ) {

@@ -16,6 +16,9 @@ internal fun SessionEntity.toSessionOrNull(): Session? =
             startedAt = Instant.ofEpochMilli(startedAtMillis),
             endsAt = Instant.ofEpochMilli(endsAtMillis),
             endedAt = endedAtMillis?.let(Instant::ofEpochMilli),
+            wrapUpUsed = wrapUpUsed,
+            pausedMillis = pausedMillis,
+            pausedAt = pausedAtMillis?.let(Instant::ofEpochMilli),
         )
     }.getOrNull()
 
@@ -27,4 +30,7 @@ internal fun Session.toEntity(intentText: String?): SessionEntity =
         endsAtMillis = endsAt.toEpochMilli(),
         endedAtMillis = endedAt?.toEpochMilli(),
         intentText = intentText,
+        wrapUpUsed = wrapUpUsed,
+        pausedMillis = pausedMillis,
+        pausedAtMillis = pausedAt?.toEpochMilli(),
     )

@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * gate list is the user's full list of apps they struggle with (Privacy,
  * CLAUDE.md).
  */
-@Database(entities = [GateEntity::class, SessionEntity::class], version = 4, exportSchema = false)
+@Database(entities = [GateEntity::class, SessionEntity::class], version = 6, exportSchema = false)
 internal abstract class AppGateDatabase : RoomDatabase() {
     abstract fun gateDao(): GateDao
 
@@ -60,5 +60,31 @@ internal val MIGRATION_3_4 =
     object : Migration(3, 4) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE gates ADD COLUMN escalation INTEGER")
+        }
+    }
+
+/**
+ * A session that has run out can be extended once, briefly, so the user can
+ * finish what they were in the middle of. The flag lives on the row rather than
+ * in memory so the extension cannot be taken again by restarting the launcher.
+ */
+internal val MIGRATION_4_5 =
+    object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE sessions ADD COLUMN wrapUpUsed INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
+/**
+ * Session time only runs while the user is in the app, so a session needs to
+ * carry how long it has been paused for and whether it is paused right now.
+ * Existing rows start at zero, which reads as "never paused" — the same answer
+ * the old wall-clock accounting gave.
+ */
+internal val MIGRATION_5_6 =
+    object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE sessions ADD COLUMN pausedMillis INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE sessions ADD COLUMN pausedAtMillis INTEGER")
         }
     }

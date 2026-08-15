@@ -19,6 +19,8 @@ import app.lawnchair.backup.ui.restoreBackupGraph
 import app.lawnchair.backup.ui.restoreNovaBackupGraph
 import app.lawnchair.preferences.BasePreferenceManager
 import app.lawnchair.preferences.preferenceManager
+import app.lawnchair.appgate.AppGateAppStatsPreferences
+import app.lawnchair.appgate.AppGateStatsPreferences
 import app.lawnchair.ui.preferences.LocalIsExpandedScreen
 import app.lawnchair.ui.preferences.about.acknowledgements.Acknowledgements
 import app.lawnchair.ui.preferences.components.colorpreference.ColorPreferenceModelList
@@ -108,6 +110,12 @@ fun PreferenceNavigation(
         }
 
         composable<SettingsSearch>(deepLinks = getDeepLink(SettingsSearch)) { SettingsSearchPreferences() }
+
+        composable<AppGateStats>(deepLinks = getDeepLink(AppGateStats)) { AppGateStatsPreferences() }
+        composable<AppGateAppStats> { backStackEntry ->
+            val route: AppGateAppStats = backStackEntry.toRoute()
+            AppGateAppStatsPreferences(packageName = route.packageName, userId = route.userId)
+        }
 
         composable<GeneralFontSelection> { backStackEntry ->
             val route: GeneralFontSelection = backStackEntry.toRoute()

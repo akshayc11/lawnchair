@@ -1,5 +1,6 @@
 package com.akshayc.appgate.core.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -23,4 +24,13 @@ data class SessionEntity(
     val endsAtMillis: Long,
     val endedAtMillis: Long?,
     val intentText: String?,
+    // The SQL default is declared so the column an upgrade adds matches the one
+    // a fresh install creates — Room compares them.
+    @ColumnInfo(defaultValue = "0")
+    val wrapUpUsed: Boolean = false,
+    /** Settled pause time — screen off, or another app in front. */
+    @ColumnInfo(defaultValue = "0")
+    val pausedMillis: Long = 0,
+    /** Start of a pause that is still open, if there is one. */
+    val pausedAtMillis: Long? = null,
 )

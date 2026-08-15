@@ -14,6 +14,7 @@ import app.lawnchair.preferences.getAdapter
 import app.lawnchair.preferences.preferenceManager
 import app.lawnchair.preferences2.preferenceManager2
 import app.lawnchair.ui.preferences.LocalIsExpandedScreen
+import app.lawnchair.ui.preferences.components.NavigationActionPreference
 import app.lawnchair.ui.preferences.components.WallpaperAccessPermissionDialog
 import app.lawnchair.ui.preferences.components.controls.ListPreference
 import app.lawnchair.ui.preferences.components.controls.ListPreferenceEntry
@@ -23,6 +24,7 @@ import app.lawnchair.ui.preferences.components.controls.WarningPreference
 import app.lawnchair.ui.preferences.components.layout.ExpandAndShrink
 import app.lawnchair.ui.preferences.components.layout.PreferenceGroup
 import app.lawnchair.ui.preferences.components.layout.PreferenceLayout
+import app.lawnchair.ui.preferences.navigation.AppGateStats
 import app.lawnchair.util.FileAccessManager
 import app.lawnchair.util.FileAccessState
 import app.lawnchair.util.isGestureNavContractCompatible
@@ -129,6 +131,11 @@ fun ExperimentalFeaturesPreferences(
                 adapter = prefs2.enableAppGate.getAdapter(),
                 label = stringResource(id = R.string.appgate_feature_label),
                 description = stringResource(id = R.string.appgate_feature_description),
+            )
+            NavigationActionPreference(
+                label = stringResource(id = R.string.appgate_stats_title),
+                subtitle = stringResource(id = R.string.appgate_stats_entry_description),
+                destination = AppGateStats,
             )
         }
 

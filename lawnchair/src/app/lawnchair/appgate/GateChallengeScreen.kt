@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.akshayc.appgate.core.model.DenyReason
 import com.akshayc.appgate.core.model.FrictionChallenge
 import com.akshayc.appgate.core.model.Tier
+import com.android.launcher3.BuildConfig
 import com.android.launcher3.R
 import kotlin.random.Random
 import kotlinx.coroutines.delay
@@ -362,4 +363,11 @@ private fun rememberEffortTask(): EffortTask {
 private const val BASE_DELAY_SECONDS = 15
 private const val EXTRA_DELAY_SECONDS = 5
 private const val DEFAULT_SESSION_MINUTES = 15
-private val SESSION_LENGTH_CHOICES = listOf(5, 15, 30)
+
+/**
+ * Debug builds offer a one-minute session. Not a weakened Tier — the challenge
+ * is unchanged — only a session short enough to watch it run out (CLAUDE.md,
+ * Working agreements).
+ */
+private val SESSION_LENGTH_CHOICES =
+    if (BuildConfig.DEBUG) listOf(1, 5, 15, 30) else listOf(5, 15, 30)
